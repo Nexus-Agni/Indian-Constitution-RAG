@@ -6,7 +6,6 @@ from langchain_qdrant import QdrantVectorStore
 import os
 from openai import OpenAI
 import json
-from qdrant_client import QdrantClient
 
 google_api_key = os.getenv("GOOGLE_API_KEY")
 
@@ -29,29 +28,27 @@ def RAG_application(query):
         google_api_key=google_api_key
     )
 
-    qdrant_client = QdrantClient(url='http://localhost:6333')
     collection_name = 'Constitution-RAG'
 
-    if qdrant_client.get_collection(collection_name):
+    # Use LangChain's QdrantVectorStore to handle the collection
+    try:
+        # Try to load the existing collection
         vector_store = QdrantVectorStore.from_existing_collection(
             embedding=embeddings,
             url='http://localhost:6333',
-            collection_name= 'Constitution-RAG'
+            collection_name=collection_name
         )
-    else : 
+        print(f"Collection '{collection_name}' already exists. Using the existing collection.")
+    except Exception as e:
+        # If the collection doesn't exist, create it
+        print(f"Collection '{collection_name}' does not exist. Creating it now.")
         vector_store = QdrantVectorStore.from_documents(
-        documents=split_docs, 
-        embedding=embeddings,
-        url='http://localhost:6333',
-        collection_name = 'Constitution-RAG'
-    )
-
-    # vector_store = QdrantVectorStore.from_documents(
-    #     documents=split_docs, 
-    #     embedding=embeddings,
-    #     url='http://localhost:6333',
-    #     collection_name = 'Constitution-RAG'
-    # )
+            documents=split_docs,
+            embedding=embeddings,
+            url='http://localhost:6333',
+            collection_name=collection_name
+        )
+        print(f"Collection '{collection_name}' created successfully.")
 
     print("📝📝📝📝📝📝📝📝-----RAG processed-----📝📝📝📝📝📝📝")
 
